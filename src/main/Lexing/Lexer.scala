@@ -3,7 +3,7 @@ import scala.util.matching.Regex
 case class Token(val value: String, tokentype: TokenType._type)
 case class TokenData(pattern: Regex, tokentype: TokenType._type)
 
-class Lexer {
+class Lexer(userData: String) {
 
   val _space = TokenData(TokenRegex.SPACE, TokenType.SPACE);
   val _break = TokenData(TokenRegex.BREAK, TokenType.BREAK);
@@ -26,6 +26,7 @@ class Lexer {
   val _vartype = TokenData(TokenRegex.VAR_TYPE, TokenType.VAR_TYPE);
 
   val lexList  = List(_break,_vartype, _print, _while, _do, _if, _then, _else, _colon, _datatype, _assign_op,_int_literal, _uop, _bop, _alpha_literal, _bool_literal , _identifier );
+  val lexedUserData = lex(userData)
 
   def lex(userData: String): List[Token] = {
     if (userData.trim().isEmpty)
@@ -33,7 +34,6 @@ class Lexer {
     else {
       val (before,token,after) = findToken(userData.trim(), lexList)
       println("before: "+before+" | token : "+ token.value +" | after: "+after)
-      //println(token.getToken()+" "+token.getType())
       lex(before) ::: List(token) ::: lex(after)
     }
   }
@@ -54,5 +54,13 @@ class Lexer {
       findToken(userData, lexList.tail)
     }
   }
-  
+
+  def getNextToken(pos: Int) : (Int , Token)={
+    if(pos < lexedUserData.length )
+      (pos+1 , lexedUserData.apply(pos))
+    else
+      (-1 , null)
+  }
+
+
 }

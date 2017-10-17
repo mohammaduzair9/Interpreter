@@ -3,7 +3,8 @@ object main {
     //val codeFile = Source.fromFile("examples/if.appp")
     val sourceCode = "var x: alpha = \"testing\"";
     println(sourceCode)
-    val lexer: Lexer = new Lexer();
-    lexer.lex(sourceCode).map(token => println(token.value))
+    val lexer: Lexer = new Lexer(sourceCode);
+    //lexer.lex(sourceCode).map(token => println(token.value))
+    println(lexer.getNextToken(3))
   }
 }
