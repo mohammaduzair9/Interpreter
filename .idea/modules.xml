@@ -3,6 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/AP++.iml" filepath="$PROJECT_DIR$/.idea/modules/AP++.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/interpreter.iml" filepath="$PROJECT_DIR$/.idea/modules/interpreter.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/interpreter-build.iml" filepath="$PROJECT_DIR$/.idea/modules/interpreter-build.iml" />
     </modules>
   </component>
 </project>

@@ -1,3 +1,5 @@
+package Lexing
+
 object TokenType {
 
   sealed trait _type
@@ -6,6 +8,8 @@ object TokenType {
   case object INTEGER extends _type
   case object BOOLEAN extends _type
   case object ALPHA extends _type
+  case object CONST_TYPE extends _type
+  case object SKIP extends _type
   case object STRING extends _type
   case object ASSIGNMENT extends _type
   case object VAR_TYPE extends _type
@@ -13,6 +17,9 @@ object TokenType {
   case object EMPTY extends _type
   case object SPACE extends _type
   case object BOP extends _type
+  case object PLUS extends _type
+  case object MUL extends _type
+  case object DIV extends _type
   case object UOP extends _type
   case object DATA_TYPE extends _type
   case object RESERVED extends _type
