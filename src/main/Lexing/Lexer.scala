@@ -61,12 +61,9 @@ class Lexer(data: String) {
         getToken(data, lexList.tail)
   }
 
-  def getNextToken(pos: Int) : (Int, Token) = {
-    if(pos < lexData.length )
-      (pos+1 , lexData.apply(pos))
-    else
-      (pos , new Token("EOF",null))
-
+  def getNextToken(tokens: List[Token]) : List[Token] = {
+    if(!tokens.isEmpty ) tokens.tail
+    else tokens
   }
 
 

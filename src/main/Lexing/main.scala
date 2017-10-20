@@ -7,6 +7,8 @@ object main {
     println(sourceCode)
     val lexer: Lexer = new Lexer(sourceCode);
     lexer.lex(sourceCode).map(token => println(token.value + " : " + token.tokentype))
-    //println(lexer.getNextToken(2))
+    val tokens = lexer.lex(sourceCode)
+    println(tokens)
+    println(lexer.getNextToken(tokens))
   }
 }
