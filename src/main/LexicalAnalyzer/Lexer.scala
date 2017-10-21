@@ -1,4 +1,4 @@
-package Lexing
+package LexicalAnalyzer
 import scala.util.matching.Regex
 
 case class Token(val value: String, tokentype: TokenType._type)

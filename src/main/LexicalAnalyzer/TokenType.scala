@@ -1,4 +1,4 @@
-package Lexing
+package LexicalAnalyzer
 
 object TokenType {
 

@@ -1,7 +1,7 @@
-package Parsing
+package ASTBuilderParser
 
-import Lexing._
-import Parsing.AST._
+import LexicalAnalyzer._
+import ASTBuilderParser.AST._
 import scala.util.{Failure, Success, Try}
 
 class Parser(lexer: Lexer) {
@@ -32,13 +32,15 @@ class Parser(lexer: Lexer) {
   }
 
   def statement(tokens : List[Token]): (List[Token], node) = {
-
-    tokens.head.tokentype match {
+      tokens.head.tokentype match {
       case TokenType.VAR_TYPE |
            TokenType.CONST_TYPE   => declaration(tokens)
       case TokenType.SKIP         => skip_statement(tokens)
       case TokenType.IF           => if_statement(tokens)
-      case TokenType.IDENTIFIER   => assign_statement(tokens)
+      case TokenType.IDENTIFIER   => identifier_statement(tokens)
+      case TokenType.ALPHA |
+           TokenType.BOOLEAN |
+           TokenType.INTEGER      => literal_statement(tokens)
       case TokenType.WHILE        => while_statement(tokens)
       case TokenType.PRINT        => print_statement(tokens)
       case _                      => throw new Exception("No more statements")
@@ -46,7 +48,6 @@ class Parser(lexer: Lexer) {
   }
 
   def declaration(tokens : List[Token]): (List[Token], node) = {
-
     val (nextTokens, left_node) = tokens.head.tokentype match {
       case TokenType.VAR_TYPE     => variable(getNextToken(tokens))
       case TokenType.CONST_TYPE   => const(getNextToken(tokens))
@@ -98,6 +99,21 @@ class Parser(lexer: Lexer) {
     }
   }
 
+  def identifier_statement(tokens: List[Token]): (List[Token], node) = {
+    tokens.apply(1).value match {
+      case "=" => assign_statement(tokens)
+      case "-" | "==" | "><" | "and" | "or" | "\\^" | ">" | "<" | "\\+" | "\\/" | "\\*" => expr(tokens)
+      case _ => variable(tokens)
+    }
+  }
+
+  def  literal_statement(tokens: List[Token]): (List[Token], node) = {
+    tokens.apply(1).value match {
+      case "-" | "==" | "><" | "and" | "or" | "\\^" | ">" | "<" | "\\+" | "\\/" | "\\*" => expr(tokens)
+      case _ => factor(tokens)
+    }
+  }
+
   def assign_statement(tokens : List[Token]): (List[Token], node) = {
     val left_node = Var(tokens.head)
     val AssignToken = getNextToken(tokens)
@@ -112,12 +128,12 @@ class Parser(lexer: Lexer) {
   def while_statement(tokens : List[Token]): (List[Token], node) = {
     val (doToken, expr_node) = expr(getNextToken(tokens))
     if(doToken.head.tokentype != TokenType.DO) throw new Exception("Syntax Error : DO Not found")
-    val (nextTokens, statement_node) = statement(getNextToken(doToken))
+    val (nextTokens, statement_node) = statements(getNextToken(doToken))
     (nextTokens, While(expr_node, statement_node))
   }
 
   def print_statement(tokens : List[Token]): (List[Token], node) = {
-    val (nextTokens, expr_node) = expr(getNextToken(tokens))
+    val (nextTokens, expr_node) = statement(getNextToken(tokens))
     (nextTokens, Print(expr_node))
   }
 
@@ -134,35 +150,41 @@ class Parser(lexer: Lexer) {
 
   }
 
-  def term(tokens : List[Token]): (List[Token], node) = {val (nextTokens, left_node) = factor(tokens);  nextTerm(nextTokens, left_node)}
-  def nextTerm(tokens: List[Token], left_node: node): (List[Token], node) = {
-    if (tokens.isEmpty) (tokens, left_node)
-    else {
-      tokens.head.tokentype match {
-        case TokenType.DIV | TokenType.MUL => {
-          val (nextTokens, rightNode) = factor(getNextToken(tokens));
-          val node = BinaryOp(left_node, tokens.head, rightNode)
-          nextTerm(nextTokens, node)
+  def term(tokens : List[Token]): (List[Token], node) = {val (nextTokens, left_node) = factor(tokens);  nextTerm(nextTokens, left_node)
+
+    def nextTerm(tokens: List[Token], left_node: node): (List[Token], node) = {
+      if (tokens.isEmpty) (tokens, left_node)
+      else {
+        tokens.head.tokentype match {
+          case TokenType.DIV | TokenType.MUL => {
+            val (nextTokens, rightNode) = factor(getNextToken(tokens));
+            val node = BinaryOp(left_node, tokens.head, rightNode)
+            nextTerm(nextTokens, node)
+          }
+          case _ => (tokens, left_node)
         }
-        case _ => (tokens, left_node)
       }
     }
   }
 
-  def expr(tokens:List[Token]): (List[Token], node) = {val (newTokens, left_node) = term(tokens); nextExpr(newTokens, left_node)}
-  def nextExpr(tokens : List[Token], left_node: node): (List[Token],node) = {
-    if (tokens.isEmpty) (tokens, left_node)
-    else {
-      tokens.head.tokentype match {
-        case TokenType.BOP | TokenType.PLUS => {
-          val (nextTokens, rightNode) = term(getNextToken(tokens))
-          val node = BinaryOp(left_node, tokens.head, rightNode)
-          nextExpr(nextTokens, node)
+
+  def expr(tokens:List[Token]): (List[Token], node) = {val (newTokens, left_node) = term(tokens); nextExpr(newTokens, left_node)
+
+    def nextExpr(tokens : List[Token], left_node: node): (List[Token],node) = {
+      if (tokens.isEmpty) (tokens, left_node)
+      else {
+        tokens.head.tokentype match {
+          case TokenType.BOP | TokenType.PLUS => {
+            val (nextTokens, rightNode) = term(getNextToken(tokens))
+            val node = BinaryOp(left_node, tokens.head, rightNode)
+            nextExpr(nextTokens, node)
+          }
+          case _ => (tokens, left_node)
         }
-        case _ => (tokens, left_node)
       }
     }
   }
+
 
   def variable(tokens : List[Token]): (List[Token], node) = (getNextToken(tokens), Var(tokens.head))
 

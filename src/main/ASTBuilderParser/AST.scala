@@ -1,5 +1,5 @@
-package Parsing
-import Lexing._
+package ASTBuilderParser
+import LexicalAnalyzer._
 
 object AST {
 

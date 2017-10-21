@@ -1,5 +1,5 @@
-import Lexing._
-import Parsing._
+import LexicalAnalyzer._
+import ASTBuilderParser._
 
 object main {
   def main(args: Array[String]) {
