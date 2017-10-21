@@ -83,7 +83,64 @@ class Parser(lexer: Lexer) {
 
   }
 
+  def skip_statement(tokens: List[Token]): (List[Token],node) = {
+    if (tokens.head.tokentype == TokenType.BREAK) statement(tokens)
+    else skip_statement(getNextToken(tokens))
+  }
 
+  def if_statement(tokens : List[Token]): (List[Token], node) = {
+    val (thenToken, expr_node) = expr(getNextToken(tokens))
+    if (thenToken.head.tokentype != TokenType.THEN) throw new Exception("Syntax Error : THEN Not found")
+    else{
+      val (elseToken, statement_node) = statement(getNextToken(thenToken))
+      if (elseToken.head.tokentype != TokenType.ELSE) throw new Exception("Syntax Error : ELSE Not found")
+      else{
+        val (endIfTokens, second_statement_node) = statement(getNextToken(elseToken))
+        val if_node = IfElse(expr_node,statement_node,second_statement_node)
+        (endIfTokens, if_node)
+      }
+    }
+  }
+
+  def identifier_statement(tokens: List[Token]): (List[Token], node) = {
+    if (tokens.length>1) {
+      tokens.apply(1).value match {
+        case "=" => assign_statement(tokens)
+        case "-" | "==" | "><" | "and" | "or" | "^" | ">" | "<" | "+" | "/" | "*" => expr(tokens)
+        case _ => variable(tokens)
+      }
+    } else variable(tokens)
+  }
+
+  def  literal_statement(tokens: List[Token]): (List[Token], node) = {
+    tokens.apply(1).value match {
+      case "-" | "==" | "><" | "and" | "or" | "\\^" | ">" | "<" | "\\+" | "\\/" | "\\*" => expr(tokens)
+      case _ => factor(tokens)
+    }
+  }
+
+  def assign_statement(tokens : List[Token]): (List[Token], node) = {
+    val left_node = Var(tokens.head)
+    val AssignToken = getNextToken(tokens)
+    if(AssignToken.head.tokentype != TokenType.ASSIGNMENT) throw new Exception("Syntax Error : = Not found")
+    else {
+      val (nextTokens, right_node) = expr(getNextToken(AssignToken))
+      val next_node = Assign(left_node, AssignToken.head, right_node)
+      (nextTokens, next_node)
+    }
+  }
+
+  def while_statement(tokens : List[Token]): (List[Token], node) = {
+    val (doToken, expr_node) = expr(getNextToken(tokens))
+    if(doToken.head.tokentype != TokenType.DO) throw new Exception("Syntax Error : DO Not found")
+    val (nextTokens, statement_node) = statements(getNextToken(doToken))
+    (nextTokens, While(expr_node, statement_node))
+  }
+
+  def print_statement(tokens : List[Token]): (List[Token], node) = {
+    val (nextTokens, expr_node) = statement(getNextToken(tokens))
+    (nextTokens, Print(expr_node))
+  }
 
   def factor(tokens : List[Token]): (List[Token], node) = {
 
@@ -139,7 +196,10 @@ class Parser(lexer: Lexer) {
   }
 
 
-  
+  def variable(tokens : List[Token]): (List[Token], node) = (getNextToken(tokens), Var(tokens.head))
+
+  def const(tokens : List[Token]): (List[Token], node) = (getNextToken(tokens), Const(tokens.head))
+
   def parse(): node = {
     val (theTokens,tree) = program(lexer.lexData)
     println(tree)
