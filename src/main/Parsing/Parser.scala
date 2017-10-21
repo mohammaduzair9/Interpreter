@@ -46,43 +46,37 @@ class Parser(lexer: Lexer) {
   }
 
   def declaration(tokens : List[Token]): (List[Token], node) = {
-    val (nextTokens, left_node) = variable(getNextToken(tokens))
-    if(!(nextTokens.head.tokentype == TokenType.COLON)) throw new Exception("Syntax Error : COLON Not found")
-    val nextTokens2 = getNextToken(nextTokens)
-    val data_type_token = nextTokens2.head
-    if(!(nextTokens2.head.tokentype == TokenType.DATA_TYPE)) throw new Exception("Syntax Error : DATATYPE Not found")
-    val nextTokens3 = getNextToken(nextTokens2)
-    if(nextTokens3.head.tokentype != TokenType.ASSIGNMENT){
-      if (nextTokens3.head.tokentype == TokenType.BREAK){
-        val next_node = Declare(left_node, nextTokens.head, null)
-        return (nextTokens3, next_node)
-      }
-      else throw new Exception("Error: Invalid Assignment Statement")
+
+    val (nextTokens, left_node) = tokens.head.tokentype match {
+      case TokenType.VAR_TYPE     => variable(getNextToken(tokens))
+      case TokenType.CONST_TYPE   => const(getNextToken(tokens))
+      case _                      => throw new Exception("Syntax Error : VAR OR CONST Not found")
     }
-    val nextTokens4 = getNextToken(nextTokens3)
-    if (data_type_token.value.equals("int")){
-      Try(nextTokens4.head.value.toInt).getOrElse(
-        if(nextTokens4.head.tokentype == TokenType.NIL) Success
-        else if(nextTokens4.head.tokentype == TokenType.IDENTIFIER) Success
-        else throw new Exception("Error: Value should be Integer")
-      )
-    } else if (data_type_token.value.equals("bool")){
-      Try(nextTokens4.head.value.toBoolean).getOrElse(
-        if(nextTokens4.head.tokentype == TokenType.NIL) Success
-        else if(nextTokens4.head.tokentype == TokenType.IDENTIFIER) Success
-        else throw new Exception("Error: Value should be Boolean")
-      )
-    } else if (data_type_token.value.equals("alpha")){
-      if (nextTokens4.head.value.charAt(0).!=('\"')){
-        if(nextTokens4.head.tokentype == TokenType.NIL) Success
-        else if(nextTokens4.head.tokentype == TokenType.IDENTIFIER) Success
-        else throw new Exception("Error: Value should be Alpha")
+    if(nextTokens.apply(0).tokentype != TokenType.COLON)      throw new Exception("Syntax Error : COLON Not found")
+    if(nextTokens.apply(1).tokentype != TokenType.DATA_TYPE)  throw new Exception("Syntax Error : DATATYPE Not found")
+
+    val dataTypeToken = getNextToken(nextTokens)
+    val assignToken = getNextToken(dataTypeToken)
+
+    assignToken.head.tokentype match {
+      case TokenType.ASSIGNMENT   => {
+
+            val valueToken = getNextToken(assignToken)
+            if(( valueToken.head.tokentype != TokenType.NIL ) || ( valueToken.head.tokentype != TokenType.IDENTIFIER )){
+              dataTypeToken.head.value match {
+                case "int"    => Try (valueToken.head.value.toInt).getOrElse(throw new Exception("Error: Value should be Integer"))
+                case "bool"   => Try (valueToken.head.value.toInt).getOrElse(throw new Exception("Error: Value should be Boolean"))
+                case "alpha"  => Try (valueToken.head.value.toInt).getOrElse(throw new Exception("Error: Value should be Alpha"))
+                case _        => throw new Exception("Error: Invalid DataType")
+              }
+            }
+            val (nextTokens2, right_node) = expr(valueToken)
+            (nextTokens2, Declare(left_node, nextTokens.head, right_node))
       }
+      case TokenType.BREAK        => (assignToken, Declare(left_node, nextTokens.head, null))
+      case _                      => throw new Exception("Error: Invalid Assignment Statement")
     }
 
-    val (nextTokens5, right_node) = expr(nextTokens4)
-    val next_node = Declare(left_node, nextTokens.head, right_node)
-    return (nextTokens5, next_node)
   }
 
   def skip_statement(tokens: List[Token]): (List[Token],node) = {
