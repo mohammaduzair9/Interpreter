@@ -2,7 +2,7 @@ package ASTBuilderParser
 
 import LexicalAnalyzer.Token
 
-object ParseError {
+object Error {
 
   def printError(err: String, tokens : List[Token], tokenList :List[Token]) {
 
