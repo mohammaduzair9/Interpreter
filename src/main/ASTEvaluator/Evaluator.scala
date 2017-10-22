@@ -46,7 +46,10 @@ class Evaluator(parser: Parser, lookupTable: Map[String, identifier]) {
 
   def evalNodeBinOp(node: BinaryOp, lookupTable: lookupTable): (Int, Map[String,identifier]) = {
 
-    if (node.LeftOp.isInstanceOf[Alpha] && node.RightOp.isInstanceOf[Alpha]) throw new Exception("Cant Perform Binary Operation on Alpha")
+    if (node.LeftOp.isInstanceOf[Alpha] && node.RightOp.isInstanceOf[Alpha]){
+      println(node)
+      throw new Exception("Cant Perform Binary Operation on Alpha")
+    }
     else {
       val leftResult = evalNode(node.LeftOp, lookupTable)._1
       val rightResult = evalNode(node.RightOp, lookupTable)._1
@@ -162,15 +165,15 @@ class Evaluator(parser: Parser, lookupTable: Map[String, identifier]) {
 
   def evalNodeWhile(node: While, lookupTable: lookupTable):(Int, Map[String,identifier]) = {
 
+
     def While(acc : Int, lookupTable : lookupTable ): (Int, lookupTable)={
 
       if (evalNode(node.While ,lookupTable)._1 == 0) (acc,lookupTable)
       else {
         def Do(acc: Int, lookupTable: Map[String, identifier], statements: List[node]): (Int, lookupTable) = {
+
           if (statements.isEmpty) (acc, lookupTable)
           else {
-            println(statements.head)
-
             val (answer, new_table) = evalNode(statements.head, lookupTable)
             Do(answer, new_table, statements.tail)
           }
@@ -184,13 +187,18 @@ class Evaluator(parser: Parser, lookupTable: Map[String, identifier]) {
 
   def evalNodePrint( node : Print, lookupTable : lookupTable):(Int, Map[String,identifier]) = {
     val answer = evalNode(node.Value, lookupTable)._1
-    if(node.Value.isInstanceOf[Bool]){
-      if(answer ==1) println("tt")
-      else println("ff")
+    if(node.Value.isInstanceOf[Var]) {
+      val mytype = lookupTable(node.Value.asInstanceOf[Var].Token.value)
+      if(mytype.dataType.equals("bool")){
+          if(answer==1) println("tt")
+          if(answer==0) println("ff")
+      }
+      else println(answer)
     }
     else println(answer)
     return (1, lookupTable)
-  }
+   }
+
 
   def evalNodeNil(node: node, lookupTable: lookupTable) = {
     (0, lookupTable)
