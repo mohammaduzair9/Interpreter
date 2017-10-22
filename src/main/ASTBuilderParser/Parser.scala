@@ -66,8 +66,16 @@ class Parser(lexer: Lexer) {
             if(( valueToken.head.tokentype != TokenType.NIL ) || ( valueToken.head.tokentype != TokenType.IDENTIFIER )){
               dataTypeToken.head.value match {
                 case "int"    => Try (valueToken.head.value.toInt).getOrElse(throw new Exception("Error: Value should be Integer"))
-                case "bool"   => Try (valueToken.head.value.toInt).getOrElse(throw new Exception("Error: Value should be Boolean"))
-                case "alpha"  => Try (valueToken.head.value.toInt).getOrElse(throw new Exception("Error: Value should be Alpha"))
+                case "bool"   => {
+                  if(!(valueToken.head.value.equals("tt") || (valueToken.head.value.equals("ff"))))
+                    throw new Exception("Error: Value should be Boolean")
+                }
+                case "alpha"  => {
+                  if (Try (valueToken.head.value.toInt).isSuccess)
+                    (throw new Exception("Error: Value should be Alpha"))
+                  else if (Try (valueToken.head.value.toString).isFailure)
+                    (throw new Exception("Error: Value should be Alpha"))
+                }
                 case _        => throw new Exception("Error: Invalid DataType")
               }
             }

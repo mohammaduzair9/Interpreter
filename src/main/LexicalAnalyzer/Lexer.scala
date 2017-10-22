@@ -48,6 +48,7 @@ class Lexer(data: String) {
   }
 
   def getToken(data: String, lexList: List[TokenInfo]) : (Token, String, String) = {
+
       val nextToken = lexList.apply(0)
       val matcher= nextToken.tokenRegex.pattern.matcher(data)
       if (matcher.find()) {

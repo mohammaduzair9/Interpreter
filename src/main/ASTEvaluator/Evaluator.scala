@@ -6,6 +6,8 @@ import LexicalAnalyzer._
 import ASTBuilderParser.AST._
 import ASTBuilderParser.Parser
 
+import scala.util.Try
+
 case class identifier( varType: String, dataType: String , value: Int)
 
 class Evaluator(parser: Parser, lookupTable: Map[String, identifier]) {
@@ -13,10 +15,11 @@ class Evaluator(parser: Parser, lookupTable: Map[String, identifier]) {
   type lookupTable = Map[String, identifier]
   def evalNode(node: node, lookupTable: lookupTable): (Int,lookupTable) = {
 
+
     if      (node.isInstanceOf[BinaryOp])   evalNodeBinOp(node.asInstanceOf[BinaryOp], lookupTable)
     else if (node.isInstanceOf[UnaryOp])    evalNodeUnaryOp(node.asInstanceOf[UnaryOp], lookupTable)
     else if (node.isInstanceOf[Integer])    evalNodeInt(node.asInstanceOf[Integer], lookupTable)
-    else if (node.isInstanceOf[Boolean])    evalNodeBool(node.asInstanceOf[Bool], lookupTable)
+    else if (node.isInstanceOf[Bool])    evalNodeBool(node.asInstanceOf[Bool], lookupTable)
     else if (node.isInstanceOf[Alpha])      evalNodeAlpha(node.asInstanceOf[Alpha], lookupTable)
     else if (node.isInstanceOf[Declare])    evalNodeVarDec(node.asInstanceOf[Declare], lookupTable)
     else if (node.isInstanceOf[Assign])     evalNodeAssign(node.asInstanceOf[Assign], lookupTable)
@@ -26,6 +29,7 @@ class Evaluator(parser: Parser, lookupTable: Map[String, identifier]) {
     else if (node.isInstanceOf[Print])      evalNodePrint(node.asInstanceOf[Print], lookupTable)
     else if (node.isInstanceOf[Nil])        evalNodeNil(node.asInstanceOf[Nil], lookupTable)
     else throw new Exception("Invalid node")
+
 
   }
 
@@ -37,6 +41,7 @@ class Evaluator(parser: Parser, lookupTable: Map[String, identifier]) {
     def evalNodes(nodes: List[node], lookupTable: lookupTable) {
       if (!nodes.isEmpty) evalNodes(nodes.tail, evalNode(nodes.head, lookupTable)._2)
     }
+
   }
 
   def evalNodeBinOp(node: BinaryOp, lookupTable: lookupTable): (Int, Map[String,identifier]) = {
@@ -101,19 +106,12 @@ class Evaluator(parser: Parser, lookupTable: Map[String, identifier]) {
       val varType = if (node.Name.isInstanceOf[Var]) "var" else "const"
       val dataType = if(node.Value.isInstanceOf[Integer]) "int" else if(node.Value.isInstanceOf[Bool]) "bool" else "alpha"
       val value = evalNode(node.Value, lookupTable)._1
-      if  (1==2
-//            (value.isInstanceOf[Int]    && dataType.equals("int"))    ||
-//            (value.isInstanceOf[String] && dataType.equals("alpha"))  ||
-//            (value.isInstanceOf[Bool]   && dataType.equals("bool"))
-          )
-        throw new Exception(dataType + " type variable cannot be assigned a " + value.getClass.getSimpleName)
-      else{
-        val newIdentifier =  new identifier(varType, dataType, value)
-        val newLookupTable = lookupTable + (varName -> newIdentifier)
-        (1, newLookupTable)
-      }
+      val newIdentifier =  new identifier(varType, dataType, value)
+      val newLookupTable = lookupTable + (varName -> newIdentifier)
+      (1, newLookupTable)
     }
   }
+
 
   def evalNodeAssign(node: Assign, lookupTable: Map[String,identifier]): (Int,Map[String,identifier]) = {
 
@@ -124,17 +122,26 @@ class Evaluator(parser: Parser, lookupTable: Map[String, identifier]) {
     else {
       val dataType = varIdentifier.dataType
       val value = evalNode(node.Value, lookupTable)._1
-      if  (1==2
-      //            (value.isInstanceOf[Int]    && dataType.equals("int"))    ||
-      //            (value.isInstanceOf[String] && dataType.equals("alpha"))  ||
-      //            (value.isInstanceOf[Bool]   && dataType.equals("bool"))
-      )
-        throw new Exception(dataType + " type variable cannot be assigned a " + value.getClass.getSimpleName)
-      else{
-        val newIdentifier =  (new identifier(varIdentifier.varType, varIdentifier.dataType, value))
-        val new_lookupTable = lookupTable.+(varName -> newIdentifier)
-        (1, new_lookupTable)
+      dataType match {
+        case "int"    => Try (value.toInt).getOrElse(throw new Exception("Error: Value should be Integer"))
+        case "bool"   => {
+
+          if(!(value==1 || value==0))
+            throw new Exception("Error: Value should be Boolean")
+        }
+        case "alpha"  => {
+          if (Try (value.toInt).isSuccess)
+            (throw new Exception("Error: Value should be Alpha"))
+          else if (Try (value.toString).isFailure)
+            (throw new Exception("Error: Value should be Alpha"))
+        }
+        case _        => throw new Exception(dataType + " type variable cannot be assigned a " + value.getClass.getSimpleName)
       }
+
+      val newIdentifier =  (new identifier(varIdentifier.varType, varIdentifier.dataType, value))
+      val new_lookupTable = lookupTable.+(varName -> newIdentifier)
+      (1, new_lookupTable)
+
     }
   }
 
@@ -147,7 +154,6 @@ class Evaluator(parser: Parser, lookupTable: Map[String, identifier]) {
   }
 
   def evalNodeIf(node: IfElse, lookupTable: lookupTable):(Int, Map[String,identifier]) = {
-    println(evalNode(node.If, lookupTable)._1)
 
     if (evalNode(node.If, lookupTable)._1 != 0)
           (evalNode(node.Then, lookupTable)._1, lookupTable)
@@ -156,15 +162,15 @@ class Evaluator(parser: Parser, lookupTable: Map[String, identifier]) {
 
   def evalNodeWhile(node: While, lookupTable: lookupTable):(Int, Map[String,identifier]) = {
 
-
     def While(acc : Int, lookupTable : lookupTable ): (Int, lookupTable)={
 
       if (evalNode(node.While ,lookupTable)._1 == 0) (acc,lookupTable)
       else {
         def Do(acc: Int, lookupTable: Map[String, identifier], statements: List[node]): (Int, lookupTable) = {
-
           if (statements.isEmpty) (acc, lookupTable)
           else {
+            println(statements.head)
+
             val (answer, new_table) = evalNode(statements.head, lookupTable)
             Do(answer, new_table, statements.tail)
           }
@@ -177,11 +183,12 @@ class Evaluator(parser: Parser, lookupTable: Map[String, identifier]) {
   }
 
   def evalNodePrint( node : Print, lookupTable : lookupTable):(Int, Map[String,identifier]) = {
-    println(node)
     val answer = evalNode(node.Value, lookupTable)._1
-    if(!node.Value.isInstanceOf[Alpha]){
-      println(answer)
+    if(node.Value.isInstanceOf[Bool]){
+      if(answer ==1) println("tt")
+      else println("ff")
     }
+    else println(answer)
     return (1, lookupTable)
   }
 
