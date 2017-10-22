@@ -1,4 +1,5 @@
 package LexicalAnalyzer
+import scala.util.{Failure, Success, Try}
 import scala.util.matching.Regex
 
 case class Token(val value: String, tokentype: TokenType._type)
@@ -49,7 +50,7 @@ class Lexer(data: String) {
 
   def getToken(data: String, lexList: List[TokenInfo]) : (Token, String, String) = {
 
-      val nextToken = lexList.apply(0)
+      val nextToken = Try (lexList.apply(0)).getOrElse(throw new Exception)
       val matcher= nextToken.tokenRegex.pattern.matcher(data)
       if (matcher.find()) {
         val preTokenData = data.substring(0, matcher.start())

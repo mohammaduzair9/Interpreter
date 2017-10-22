@@ -19,7 +19,7 @@ class Evaluator(parser: Parser, lookupTable: Map[String, identifier]) {
     if      (node.isInstanceOf[BinaryOp])   evalNodeBinOp(node.asInstanceOf[BinaryOp], lookupTable)
     else if (node.isInstanceOf[UnaryOp])    evalNodeUnaryOp(node.asInstanceOf[UnaryOp], lookupTable)
     else if (node.isInstanceOf[Integer])    evalNodeInt(node.asInstanceOf[Integer], lookupTable)
-    else if (node.isInstanceOf[Bool])    evalNodeBool(node.asInstanceOf[Bool], lookupTable)
+    else if (node.isInstanceOf[Bool])       evalNodeBool(node.asInstanceOf[Bool], lookupTable)
     else if (node.isInstanceOf[Alpha])      evalNodeAlpha(node.asInstanceOf[Alpha], lookupTable)
     else if (node.isInstanceOf[Declare])    evalNodeVarDec(node.asInstanceOf[Declare], lookupTable)
     else if (node.isInstanceOf[Assign])     evalNodeAssign(node.asInstanceOf[Assign], lookupTable)
@@ -204,8 +204,9 @@ class Evaluator(parser: Parser, lookupTable: Map[String, identifier]) {
     (0, lookupTable)
   }
 
-  def interpret() {
+  def interpret() :Boolean = {
     val tree = parser.parse()
     evalAST(tree.asInstanceOf[Block], lookupTable)
+    return true
   }
 }
