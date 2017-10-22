@@ -24,6 +24,7 @@ class Parser(lexer: Lexer) {
 
         if(nextTokens.isEmpty || (nextTokens.head.value.equals("\n") && signal==1) ) (nextTokens,newNodes)
         else if(nextTokens.head.tokentype != TokenType.BREAK) {
+          Error.printError("Semicolon not found",nextTokens,lexer.lexData)
           throw new Exception("Semicolon not found")
         }
         else {
@@ -49,6 +50,7 @@ class Parser(lexer: Lexer) {
       case TokenType.WHILE        => while_statement(tokens)
       case TokenType.PRINT        => print_statement(tokens)
       case _                      => {
+        Error.printError("Invalid start of statement",tokens,lexer.lexData);
         throw new Exception("No more statements")
       }
     }
@@ -59,13 +61,16 @@ class Parser(lexer: Lexer) {
       case TokenType.VAR_TYPE     => variable(getNextToken(tokens))
       case TokenType.CONST_TYPE   => const(getNextToken(tokens))
       case _                      => {
+        Error.printError("Syntax Error : Vartype Not found (enter one of var , const)",tokens,lexer.lexData)
         throw new Exception("Syntax Error : VAR OR CONST Not found")
       }
     }
     if(nextTokens.apply(0).tokentype != TokenType.COLON){
+      Error.printError("Syntax Error : COLON Not found",nextTokens,lexer.lexData)
       throw new Exception("Syntax Error : COLON Not found")
     }
     if(nextTokens.apply(1).tokentype != TokenType.DATA_TYPE){
+      Error.printError("Syntax Error : Invalid Datatype (enter one of alpha, bool, int)",nextTokens,lexer.lexData)
       throw new Exception("Syntax Error : DATATYPE Not found")
     }
 
@@ -79,20 +84,23 @@ class Parser(lexer: Lexer) {
             if(( valueToken.head.tokentype != TokenType.NIL ) || ( valueToken.head.tokentype != TokenType.IDENTIFIER )){
               dataTypeToken.head.value match {
                 case "int"    => Try (valueToken.head.value.toInt).getOrElse(
-                  ParseError.printError("Value should be Integer",valueToken,lexer.lexData)
+                  Error.printError("Value should be Integer",valueToken,lexer.lexData)
                 )
                 case "bool"   => {
                   if(!(valueToken.head.value.equals("tt") || (valueToken.head.value.equals("ff")))){
-                    ParseError.printError("Assigned Value should be Boolean",valueToken,lexer.lexData)
+                    Error.printError("Assigned Value should be Boolean",valueToken,lexer.lexData)
                     throw new Exception("Error: Assigned Value should be Boolean")
                   }
                 }
                 case "alpha"  => {
                   if (Try (valueToken.head.value.toInt).isSuccess)
+                    Error.printError("Assigned Value should be Alpha",valueToken,lexer.lexData)
                   else if (Try (valueToken.head.value.toString).isFailure)
+                    Error.printError("Assigned Value should be Alpha",valueToken,lexer.lexData)
 
                 }
                 case _        => {
+                  Error.printError("Invalid Datatype (enter one of alpha, bool, int)",valueToken,lexer.lexData)
                   throw new Exception("Error: Invalid DataType")
                 }
               }
@@ -105,6 +113,7 @@ class Parser(lexer: Lexer) {
         (assignToken, Declare(left_node, nextTokens.head, right_node))
       }
       case _ => {
+        Error.printError("Invalid Assignment Statement",assignToken,lexer.lexData)
         throw new Exception("Error: Invalid Assignment Statement")
       }
     }
@@ -119,11 +128,13 @@ class Parser(lexer: Lexer) {
   def if_statement(tokens : List[Token]): (List[Token], node) = {
     val (thenToken, expr_node) = expr(getNextToken(tokens))
     if (thenToken.head.tokentype != TokenType.THEN) {
+      Error.printError("Syntax Error: THEN not found",thenToken,lexer.lexData)
       throw new Exception("Syntax Error : THEN Not found")
     }
     else{
       val (elseToken, statement_node) = statement(getNextToken(thenToken))
       if (elseToken.head.tokentype != TokenType.ELSE) {
+        Error.printError("Syntax Error: ELSE not found",elseToken,lexer.lexData)
         throw new Exception("Syntax Error : ELSE Not found")
       }
       else{
@@ -155,6 +166,7 @@ class Parser(lexer: Lexer) {
     val left_node = Var(tokens.head)
     val AssignToken = getNextToken(tokens)
     if(AssignToken.head.tokentype != TokenType.ASSIGNMENT) {
+      Error.printError("Syntax Error: = not found",AssignToken,lexer.lexData)
       throw new Exception("Syntax Error : = Not found")
     }
     else {
@@ -167,6 +179,7 @@ class Parser(lexer: Lexer) {
   def while_statement(tokens : List[Token]): (List[Token], node) = {
     val (doToken, expr_node) = expr(getNextToken(tokens))
     if(doToken.head.tokentype != TokenType.DO) {
+      Error.printError("Syntax Error: DO not found",doToken,lexer.lexData)
       throw new Exception("Syntax Error : DO Not found")
     }
     val (nextTokens, statement_node) = statements(getNextToken(doToken),1)
